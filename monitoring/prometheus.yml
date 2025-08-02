@@ -1,0 +1,111 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'genai-stack'
+    replica: 'prometheus'
+
+rule_files:
+  - "alert_rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - alertmanager:9093
+
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # Docker Swarm nodes monitoring
+  - job_name: 'docker-swarm-nodes'
+    static_configs:
+      - targets: 
+        - 'tasks.llm:9323'
+        - 'tasks.database:9323'
+        - 'tasks.api:9323'
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # Nginx load balancer monitoring
+  - job_name: 'nginx-loadbalancer'
+    static_configs:
+      - targets: ['tasks.load-balancer:8080']
+    metrics_path: '/nginx_status'
+    scrape_interval: 15s
+
+  # Neo4j database monitoring
+  - job_name: 'neo4j'
+    static_configs:
+      - targets: ['tasks.database:7474']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # GenAI API monitoring
+  - job_name: 'genai-api'
+    static_configs:
+      - targets: ['tasks.api:8504']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+
+  # Support Bot monitoring
+  - job_name: 'support-bot'
+    static_configs:
+      - targets: ['tasks.bot:8501']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # PDF Bot monitoring
+  - job_name: 'pdf-bot'
+    static_configs:
+      - targets: ['tasks.pdf_bot:8503']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # Loader service monitoring
+  - job_name: 'loader'
+    static_configs:
+      - targets: ['tasks.loader:8502']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # Frontend monitoring
+  - job_name: 'frontend'
+    static_configs:
+      - targets: ['tasks.front-end:8505']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # Container metrics from cAdvisor (if available)
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # Node exporter for system metrics (if available)
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+# Remote write configuration (optional - for external monitoring)
+# remote_write:
+#   - url: "https://your-remote-prometheus/api/v1/write"
+#     basic_auth:
+#       username: "your-username"
+#       password: "your-password"
+
+# Remote read configuration (optional)
+# remote_read:
+#   - url: "https://your-remote-prometheus/api/v1/read"
+#     basic_auth:
+#       username: "your-username"
+#       password: "your-password"
